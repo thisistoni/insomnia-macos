@@ -45,10 +45,10 @@ import SwiftUI
     PowerControl.recoverIfNeeded()
     refreshConnections()
     poll = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-      Task { @MainActor in self?.tick() }
+      Task { @MainActor [weak self] in self?.tick() }
     }
     globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] e in
-      Task { @MainActor in self?.handleFlags(e) }
+      Task { @MainActor [weak self] in self?.handleFlags(e) }
     }
     localMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] e in
       self?.handleFlags(e)
@@ -56,7 +56,7 @@ import SwiftUI
     }
     NSWorkspace.shared.notificationCenter.addObserver(
       forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
-    ) { [weak self] _ in Task { @MainActor in self?.handleSleepRequest() } }
+    ) { [weak self] _ in Task { @MainActor [weak self] in self?.handleSleepRequest() } }
   }
   func save() {
     if let data = try? JSONEncoder().encode(preferences) {
