@@ -3,6 +3,20 @@ import XCTest
 @testable import InsomniaCore
 
 final class PolicyTests: XCTestCase {
+  func testExistingPreferencesPreservedWithLockDisabled() throws {
+    var old = Preferences()
+    old.batteryLimit = 33
+    old.stayArmed = true
+    var json = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: JSONEncoder().encode(old)) as? [String: Any])
+    json.removeValue(forKey: "lockOnLidClose")
+    let loaded = try JSONDecoder().decode(
+      Preferences.self, from: JSONSerialization.data(withJSONObject: json))
+    XCTAssertEqual(loaded, old)
+    XCTAssertFalse(loaded.lockOnLidClose)
+    old.lockOnLidClose = true
+    XCTAssertEqual(try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(old)), old)
+  }
   func testAgentCompletionNeverEndsManualSession() {
     XCTAssertFalse(
       AutomationPolicy.shouldStop(automatic: false, enabled: true, wasActive: true, isActive: false)

@@ -61,14 +61,6 @@ struct PanelView: View {
         Image(systemName: model.lidClosed ? "laptopcomputer.slash" : "laptopcomputer")
       }.font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary).padding(12).background(
         .white.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
-      if !model.accessibilityTrusted {
-        HStack(spacing: 8) {
-          Text("Screen lock needs Accessibility").foregroundStyle(.yellow)
-          Spacer(minLength: 0)
-          Button("Enable") { model.requestAccessibility() }.buttonStyle(.bordered).controlSize(
-            .mini)
-        }.font(.system(size: 11))
-      }
       if !model.armed {
         Picker("Keep awake", selection: $duration) {
           Text("Until I allow sleep").tag(0.0)
@@ -237,6 +229,23 @@ struct SettingsView: View {
         toggle("Keep awake with the lid open", $model.preferences.keepOpen).disabled(model.armed)
           .help("Allow sleep before changing this setting")
         Divider()
+        toggle("Lock screen when lid closes", $model.preferences.lockOnLidClose)
+          .help("macOS automatic-lock settings still apply.")
+        Text("Leave off so agents can use your Mac’s interface.")
+          .font(.system(size: 11)).foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true).padding(.bottom, 8)
+        if model.preferences.lockOnLidClose {
+          HStack {
+            Text(
+              model.accessibilityTrusted
+                ? "Screen lock access enabled" : "Screen lock needs Accessibility")
+            Spacer()
+            Button(model.accessibilityTrusted ? "Settings…" : "Enable…") {
+              model.requestAccessibility()
+            }
+          }.font(.system(size: 12)).padding(.vertical, 6)
+        }
+        Divider()
         slider("Maximum session", $model.preferences.maximumHours, range: 1...24, suffix: "h")
       }
       section("Keyboard access") {
@@ -253,16 +262,7 @@ struct SettingsView: View {
                   "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!)
           }
         }.font(.system(size: 12)).padding(.vertical, 10)
-        Divider()
-        HStack {
-          Text(
-            model.accessibilityTrusted
-              ? "Screen lock access enabled" : "Screen lock needs Accessibility")
-          Spacer()
-          Button(model.accessibilityTrusted ? "Settings…" : "Enable…") {
-            model.requestAccessibility(openSettings: true)
-          }
-        }.font(.system(size: 12)).padding(.vertical, 10)
+
       }
       Button(model.armed ? "Allow sleep" : "Keep Mac awake") {
         if model.armed { model.disarm() } else { model.arm() }

@@ -24,7 +24,7 @@ README instructions; ask me to install Xcode Command Line Tools if missing.
 Verify the menu-bar icon and settings appear. Explain Keep Mac awake and
 Allow sleep. Only connect agents I explicitly choose, preserve their
 existing hooks, and let me review any hook-trust prompt. Let me approve
-Accessibility/Input Monitoring myself when needed. Do not claim closed-lid
+Input Monitoring myself when needed. Do not claim closed-lid
 behavior is verified until I perform the physical test in the README.
 Report the installed version, source release URL and any remaining steps.
 ```
