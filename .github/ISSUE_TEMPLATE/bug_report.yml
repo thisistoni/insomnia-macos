@@ -1,0 +1,31 @@
+name: Bug report
+description: Report an Insomnia problem
+title: '[Bug] '
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include steps to reproduce and what you expected.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Mac model, macOS version, Insomnia version
+    validations:
+      required: true
+  - type: dropdown
+    id: power
+    attributes:
+      label: Power source
+      options:
+        - AC power
+        - Battery
+        - Both
+        - Not relevant
+  - type: textarea
+    id: details
+    attributes:
+      label: Additional details
+      description: For a lid issue, include external-display status and whether the job paused. Attach screenshots of Insomnia only; omit private transcripts and identifiers.

@@ -1,0 +1,24 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit tests
+        run: swift test
+      - name: Build application
+        env:
+          INSOMNIA_SIGN_IDENTITY: '-'
+        run: ./scripts/build.sh
+      - name: Verify signature
+        run: codesign --verify --deep --strict build/Insomnia.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Insomnia-build-not-notarized
+          path: build/Insomnia.app
