@@ -7,6 +7,7 @@ public struct Preferences: Codable, Equatable {
   public var temperatureGuard = true
   public var temperatureLimit = 45.0
   public var keepOpen = true
+  public var lockOnLidClose = false
   public var stayArmed = false
   public var fnArming = true
   public var sound = true
@@ -15,6 +16,30 @@ public struct Preferences: Codable, Equatable {
   public var keepWaiting = false
   public var maximumHours = 12.0
   public init() {}
+  enum CodingKeys: String, CodingKey {
+    case batteryGuard, batteryLimit, thermalGuard, temperatureGuard, temperatureLimit, keepOpen,
+      lockOnLidClose, stayArmed, fnArming, sound, autoArm, autoStop, keepWaiting, maximumHours
+  }
+  public init(from decoder: Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    batteryGuard = try values.decodeIfPresent(Bool.self, forKey: .batteryGuard) ?? batteryGuard
+    batteryLimit = try values.decodeIfPresent(Double.self, forKey: .batteryLimit) ?? batteryLimit
+    thermalGuard = try values.decodeIfPresent(Bool.self, forKey: .thermalGuard) ?? thermalGuard
+    temperatureGuard =
+      try values.decodeIfPresent(Bool.self, forKey: .temperatureGuard) ?? temperatureGuard
+    temperatureLimit =
+      try values.decodeIfPresent(Double.self, forKey: .temperatureLimit) ?? temperatureLimit
+    keepOpen = try values.decodeIfPresent(Bool.self, forKey: .keepOpen) ?? keepOpen
+    lockOnLidClose =
+      try values.decodeIfPresent(Bool.self, forKey: .lockOnLidClose) ?? lockOnLidClose
+    stayArmed = try values.decodeIfPresent(Bool.self, forKey: .stayArmed) ?? stayArmed
+    fnArming = try values.decodeIfPresent(Bool.self, forKey: .fnArming) ?? fnArming
+    sound = try values.decodeIfPresent(Bool.self, forKey: .sound) ?? sound
+    autoArm = try values.decodeIfPresent(Bool.self, forKey: .autoArm) ?? autoArm
+    autoStop = try values.decodeIfPresent(Bool.self, forKey: .autoStop) ?? autoStop
+    keepWaiting = try values.decodeIfPresent(Bool.self, forKey: .keepWaiting) ?? keepWaiting
+    maximumHours = try values.decodeIfPresent(Double.self, forKey: .maximumHours) ?? maximumHours
+  }
 }
 public struct Sensors: Equatable {
   public var battery: Double?

@@ -45,10 +45,10 @@ import SwiftUI
     PowerControl.recoverIfNeeded()
     refreshConnections()
     poll = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-      Task { @MainActor in self?.tick() }
+      Task { @MainActor [weak self] in self?.tick() }
     }
     globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] e in
-      Task { @MainActor in self?.handleFlags(e) }
+      Task { @MainActor [weak self] in self?.handleFlags(e) }
     }
     localMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] e in
       self?.handleFlags(e)
@@ -56,7 +56,7 @@ import SwiftUI
     }
     NSWorkspace.shared.notificationCenter.addObserver(
       forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
-    ) { [weak self] _ in Task { @MainActor in self?.handleSleepRequest() } }
+    ) { [weak self] _ in Task { @MainActor [weak self] in self?.handleSleepRequest() } }
   }
   func save() {
     if let data = try? JSONEncoder().encode(preferences) {
@@ -135,7 +135,13 @@ import SwiftUI
       started = Date()
       deadline = minutes.map { Date().addingTimeInterval($0 * 60) }
       message = automatically ? "Keeping your agents working" : "You can close the lid"
-      log("Armed\(automatically ? " by agent" : " manually")")
+      let agents = Array(
+        Set(
+          sessions.filter {
+            $0.state == "working" || preferences.keepWaiting && $0.state == "waiting"
+          }.map(\.agent))
+      ).sorted().joined(separator: ", ")
+      log(automatically ? "Keep awake started by \(agents)" : "Keep awake started manually")
       if preferences.sound { playChime() }
     } catch {
       self.error = error.localizedDescription
@@ -188,7 +194,7 @@ import SwiftUI
     if closed != lidClosed {
       lidClosed = closed
       if closed && armed {
-        lockAndSleepDisplay()
+        if preferences.lockOnLidClose { lockScreen() }
         hideOverlay?()
         log("Lid closed")
       }
@@ -207,10 +213,19 @@ import SwiftUI
         return (url, event)
       }.sorted { $0.1.timestamp < $1.1.timestamp }
       for (url, event) in events {
+        let before = registry.sessions
         registry.apply(event)
+        let key = event.agent + ":" + event.session
+        if before[key]?.state != registry.sessions[key]?.state {
+          let state =
+            event.state == "finished"
+            ? "finished" : event.state == "waiting" ? "waiting for approval" : "working"
+          log("\(event.agent): \(state)")
+        }
         try? FileManager.default.removeItem(at: url)
       }
     }
+    let previousAgents = Array(Set(sessions.map(\.agent))).sorted().joined(separator: ", ")
     registry.expire(now: Date(), hours: preferences.maximumHours)
     let currentSessions = registry.sessions.values.sorted { $0.started < $1.started }
     if sessions != currentSessions { sessions = currentSessions }
@@ -243,7 +258,7 @@ import SwiftUI
         automatic: automatic, enabled: preferences.autoStop, wasActive: previousActive,
         isActive: active)
       {
-        disarm("All agents finished", pauseAutomation: false)
+        disarm("Sleep allowed — \(previousAgents) no longer active", pauseAutomation: false)
       }
     } else if preferences.autoArm && active && !paused {
       arm(automatically: true)
@@ -256,22 +271,7 @@ import SwiftUI
   func registryValueLid() -> Bool {
     registryProperties("IOPMrootDomain")["AppleClamshellState"] as? Bool ?? false
   }
-  func lockAndSleepDisplay() {
-    let p = Process()
-    p.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
-    p.arguments = ["displaysleepnow"]
-    try? p.run()
-    // The public screen-lock shortcut, sent only on an armed lid-close transition.
-    if accessibilityTrusted,
-      let down = CGEvent(keyboardEventSource: nil, virtualKey: 12, keyDown: true),
-      let up = CGEvent(keyboardEventSource: nil, virtualKey: 12, keyDown: false)
-    {
-      down.flags = [.maskControl, .maskCommand]
-      up.flags = [.maskControl, .maskCommand]
-      down.post(tap: .cghidEventTap)
-      up.post(tap: .cghidEventTap)
-    }
-  }
+
   func diagnostics() -> String {
     "Insomnia 1.0\nmacOS \(ProcessInfo.processInfo.operatingSystemVersionString)\nArmed: \(armed)\nLid closed: \(lidClosed)\nBattery: \(sensors.battery.map { String(format: "%.0f%%", $0) } ?? "unavailable")\nTemperature: \(sensors.temperature.map { String(format: "%.1f°C", $0) } ?? "unavailable")\nThermal pressure: \(sensors.thermal)\nAgent sessions: \(sessions.count)\nConnections: \(connected.sorted().joined(separator: ", "))\n\n"
       + history.joined(separator: "\n")
@@ -285,15 +285,26 @@ import SwiftUI
     armingSound?.stop()
     armingSound?.play()
   }
-  func requestAccessibility(openSettings: Bool = false) {
+
+  func lockScreen() {
+    guard accessibilityTrusted,
+      let down = CGEvent(keyboardEventSource: nil, virtualKey: 12, keyDown: true),
+      let up = CGEvent(keyboardEventSource: nil, virtualKey: 12, keyDown: false)
+    else {
+      log("Screen lock needs Accessibility")
+      return
+    }
+    down.flags = [.maskControl, .maskCommand]
+    up.flags = [.maskControl, .maskCommand]
+    down.post(tap: .cghidEventTap)
+    up.post(tap: .cghidEventTap)
+  }
+  func requestAccessibility() {
     let options =
       [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
     accessibilityTrusted = AXIsProcessTrustedWithOptions(options)
-    if openSettings || !accessibilityTrusted {
-      NSWorkspace.shared.open(
-        URL(
-          string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-    }
+    NSWorkspace.shared.open(
+      URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
   }
   func copyDiagnostics() {
     NSPasteboard.general.clearContents()

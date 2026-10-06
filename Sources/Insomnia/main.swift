@@ -77,7 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPo
       guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
         app.processIdentifier != ProcessInfo.processInfo.processIdentifier
       else { return }
-      Task { @MainActor in self?.popover.performClose(nil) }
+      Task { @MainActor [weak self] in self?.popover.performClose(nil) }
     }
     let panelController = NSHostingController(
       rootView: PanelView(model: model, openSettings: { [weak self] in self?.openSettings() }))
@@ -174,7 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPo
     outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [
       .leftMouseDown, .rightMouseDown, .otherMouseDown,
     ]) { [weak self] _ in
-      Task { @MainActor in self?.popover.performClose(nil) }
+      Task { @MainActor [weak self] in self?.popover.performClose(nil) }
     }
     localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: [
       .leftMouseDown, .rightMouseDown, .otherMouseDown,
