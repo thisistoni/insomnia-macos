@@ -106,7 +106,9 @@ import SwiftUI
     let input = Pipe()
     let output = Pipe()
     process.executableURL = Bundle.main.executableURL
-    process.arguments = ["--power-helper"] + (preferences.keepOpen ? [] : ["--allow-idle"])
+    process.arguments =
+      ["--power-helper"] + (preferences.keepOpen ? [] : ["--allow-idle"])
+      + (preferences.keepDisplayAwake ? [] : ["--allow-display-sleep"])
     process.standardInput = input
     process.standardOutput = output
     process.standardError = FileHandle.nullDevice

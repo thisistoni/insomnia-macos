@@ -3,6 +3,21 @@ import XCTest
 @testable import InsomniaCore
 
 final class PolicyTests: XCTestCase {
+  func testExistingPreferencesEnableDisplayWakeWithoutResettingOtherSettings() throws {
+    var old = Preferences()
+    old.keepOpen = false
+    old.batteryLimit = 33
+    old.lockOnLidClose = true
+    var json = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: JSONEncoder().encode(old)) as? [String: Any])
+    json.removeValue(forKey: "keepDisplayAwake")
+    let loaded = try JSONDecoder().decode(
+      Preferences.self, from: JSONSerialization.data(withJSONObject: json))
+    XCTAssertEqual(loaded, old)
+    XCTAssertTrue(loaded.keepDisplayAwake)
+    old.keepDisplayAwake = false
+    XCTAssertEqual(try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(old)), old)
+  }
   func testExistingPreferencesPreservedWithLockDisabled() throws {
     var old = Preferences()
     old.batteryLimit = 33

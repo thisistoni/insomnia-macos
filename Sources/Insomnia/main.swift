@@ -23,7 +23,7 @@ if CommandLine.arguments.contains("--refresh-connections") {
 if CommandLine.arguments.contains("--probe") {
   let power = PowerControl()
   do {
-    try power.arm(keepOpen: true)
+    try power.arm(keepOpen: true, keepDisplayAwake: true)
     let root = registryProperties("IOPMrootDomain")
     print(
       "Lid API accepted; assertion ID: \(power.assertion); causes sleep: \(root["AppleClamshellCausesSleep"] ?? "unknown")"
