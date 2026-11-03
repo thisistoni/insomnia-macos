@@ -7,6 +7,7 @@ public struct Preferences: Codable, Equatable {
   public var temperatureGuard = true
   public var temperatureLimit = 45.0
   public var keepOpen = true
+  public var keepDisplayAwake = true
   public var lockOnLidClose = false
   public var stayArmed = false
   public var fnArming = true
@@ -18,6 +19,7 @@ public struct Preferences: Codable, Equatable {
   public init() {}
   enum CodingKeys: String, CodingKey {
     case batteryGuard, batteryLimit, thermalGuard, temperatureGuard, temperatureLimit, keepOpen,
+      keepDisplayAwake,
       lockOnLidClose, stayArmed, fnArming, sound, autoArm, autoStop, keepWaiting, maximumHours
   }
   public init(from decoder: Decoder) throws {
@@ -30,6 +32,8 @@ public struct Preferences: Codable, Equatable {
     temperatureLimit =
       try values.decodeIfPresent(Double.self, forKey: .temperatureLimit) ?? temperatureLimit
     keepOpen = try values.decodeIfPresent(Bool.self, forKey: .keepOpen) ?? keepOpen
+    keepDisplayAwake =
+      try values.decodeIfPresent(Bool.self, forKey: .keepDisplayAwake) ?? keepDisplayAwake
     lockOnLidClose =
       try values.decodeIfPresent(Bool.self, forKey: .lockOnLidClose) ?? lockOnLidClose
     stayArmed = try values.decodeIfPresent(Bool.self, forKey: .stayArmed) ?? stayArmed

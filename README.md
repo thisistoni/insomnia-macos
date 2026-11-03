@@ -23,6 +23,7 @@ Requires **macOS 14+ and Apple silicon** for the published download. Closed-lid 
 - **Filled eye:** keeping your Mac awake. **Crossed-out eye:** sleep allowed.
 - Click the eye for the session panel. Right-click for quick actions.
 - **Keep Mac awake** starts a session; **Allow sleep** restores normal sleep.
+- **Keep display awake** is on by default for open-lid sessions; turn it off in Wake → Session to let the display sleep while jobs continue.
 - Choose 15 minutes, 30 minutes, 1, 2 or 4 hours, or use the maximum-session limit.
 - Battery, battery-temperature and thermal-pressure guards stop a session when needed.
 - Optional Fn activation, screen locking on lid close, custom chime and launch at login.
@@ -61,7 +62,7 @@ Manual sessions work without extra permissions. Enable these only if you want th
 | --- | --- | --- |
 | Input Monitoring | Hold Fn to keep awake | Settings → Wake → Keyboard access |
 
-The buttons open the relevant System Settings page. macOS owns the approval; the app cannot enable these permissions for you. “Lock screen when lid closes” is off by default for computer use. Enable it in Wake → Session to lock on an awake lid-close transition; Accessibility is required. Insomnia does not force display sleep. macOS automatic-lock policies still apply.
+The buttons open the relevant System Settings page. macOS owns the approval; the app cannot enable these permissions for you. “Lock screen when lid closes” is off by default for computer use. Enable it in Wake → Session to lock on an awake lid-close transition; Accessibility is required. “Keep display awake” prevents idle display sleep during an open-lid session. Manual locking, lid-close locking and managed security policies can still lock the screen; Insomnia does not unlock it or change password settings.
 
 ## Connect coding agents
 
@@ -92,6 +93,7 @@ No third-party runtime dependencies. Open `Package.swift` in Xcode. [Architectur
 - **Agent doesn't activate it:** restart the agent, verify its hooks are loaded/trusted, and confirm Insomnia is running. A connection button only confirms configuration is installed.
 - **Fn doesn't respond:** grant Input Monitoring and follow any macOS restart prompt.
 - **Unexpected sleep:** check timers, safety limits, the stay-awake-after-opening setting and recent Activity. Avoid running another lid-control app alongside Insomnia.
+- **Screen locks while jobs continue:** check Wake → Session → Keep display awake. “Until I allow sleep” still respects the maximum-session and safety limits. A locked screen does not by itself mean the Mac slept.
 
 ## License
 

@@ -1,5 +1,12 @@
 # Verification
 
+## Display-wake fix, 3 November 2026
+
+- Ten unit tests pass, including migration of existing preferences to Keep display awake without resetting other settings and round-tripping an explicit opt-out. The release build and strict Developer ID signature verification pass locally.
+- Real helper checks verify both system and display idle-sleep assertions under STOP, EOF, watchdog timeout, SIGTERM and sustained heartbeats, followed by complete assertion/ownership-receipt cleanup. Display-sleep opt-out retains only the system assertion; open-lid idle opt-out holds neither.
+- The native Wake settings were inspected. Starting/stopping sessions through the UI was checked against the owning Insomnia helper's entries in `pmset -g assertions`. Keep display awake on acquires both assertions; off acquires only the system assertion. Session-only settings are disabled while armed.
+- These checks do not reproduce the reported historical lock, prove a full idle-timeout run or revalidate physical closed-lid behavior. A separate existing `caffeinate -d -i` process was running during the checks; assertions were checked by helper PID to avoid attributing that process's display hold to Insomnia. The local fix has not been newly notarized or publicly released.
+
 Local review on 6 October 2026: Apple-silicon Mac, macOS 26, Swift 6.3.2.
 
 ## Confirmed

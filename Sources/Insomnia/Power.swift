@@ -28,8 +28,9 @@ final class PowerControl {
   private let ownershipLock = NSRecursiveLock()
   var connection: io_connect_t = 0
   var assertion: IOPMAssertionID = 0
+  var displayAssertion: IOPMAssertionID = 0
   var ownsLid = false
-  func arm(keepOpen: Bool) throws {
+  func arm(keepOpen: Bool, keepDisplayAwake: Bool) throws {
     ownershipLock.lock()
     defer { ownershipLock.unlock() }
     let service = IOServiceGetMatchingService(
@@ -56,6 +57,16 @@ final class PowerControl {
         release()
         throw PowerError.failed("Sleep assertion failed (\(status))")
       }
+      if keepDisplayAwake {
+        let displayStatus = IOPMAssertionCreateWithName(
+          kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
+          IOPMAssertionLevel(kIOPMAssertionLevelOn), "Insomnia active display" as CFString,
+          &displayAssertion)
+        guard displayStatus == kIOReturnSuccess else {
+          release()
+          throw PowerError.failed("Display assertion failed (\(displayStatus))")
+        }
+      }
     }
   }
   /// powerd may reevaluate the shared clamshell flag after power-source/display changes.
@@ -73,6 +84,10 @@ final class PowerControl {
   func release() {
     ownershipLock.lock()
     defer { ownershipLock.unlock() }
+    if displayAssertion != 0 {
+      IOPMAssertionRelease(displayAssertion)
+      displayAssertion = 0
+    }
     if assertion != 0 {
       IOPMAssertionRelease(assertion)
       assertion = 0
@@ -117,7 +132,9 @@ enum PowerError: LocalizedError {
 func runPowerHelper() -> Never {
   let power = PowerControl()
   do {
-    try power.arm(keepOpen: !CommandLine.arguments.contains("--allow-idle"))
+    try power.arm(
+      keepOpen: !CommandLine.arguments.contains("--allow-idle"),
+      keepDisplayAwake: !CommandLine.arguments.contains("--allow-display-sleep"))
     print("READY")
     fflush(stdout)
   } catch {
